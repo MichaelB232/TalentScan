@@ -1,0 +1,78 @@
+// Prisma schema for TalentScan AI
+// Run: npx prisma migrate dev --name init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ──────────────────────────────────────────────
+// Candidate: represents an uploaded CV
+// ──────────────────────────────────────────────
+model Candidate {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Raw uploaded file metadata
+  fileName  String
+  fileSize  Int
+  mimeType  String
+
+  // Raw text extracted from the PDF/DOCX
+  rawText   String @db.Text
+
+  // Structured extraction result (stored as JSON)
+  extraction Json?
+
+  // Relation to job-matching analyses
+  analyses  AnalysisResult[]
+
+  @@map("candidates")
+}
+
+// ──────────────────────────────────────────────
+// JobDescription: a JD entered by the recruiter
+// ──────────────────────────────────────────────
+model JobDescription {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  title       String
+  description String   @db.Text
+
+  // Relation to match analyses
+  analyses    AnalysisResult[]
+
+  @@map("job_descriptions")
+}
+
+// ──────────────────────────────────────────────
+// AnalysisResult: result of matching a CV to a JD
+// ──────────────────────────────────────────────
+model AnalysisResult {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+
+  candidateId     String
+  candidate       Candidate       @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  jobDescriptionId String
+  jobDescription  JobDescription  @relation(fields: [jobDescriptionId], references: [id], onDelete: Cascade)
+
+  // 0–100 match percentage
+  matchScore      Float
+
+  // 2-3 sentence executive summary
+  executiveSummary String @db.Text
+
+  // Skill gap analysis (JSON array of strings)
+  skillGaps       Json
+
+  @@map("analysis_results")
+}

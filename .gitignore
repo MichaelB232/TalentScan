@@ -1,0 +1,6 @@
+﻿# Environment variables (root docker-compose secrets)
+.env
+
+# OS
+.DS_Store
+Thumbs.db

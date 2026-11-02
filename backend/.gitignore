@@ -1,0 +1,22 @@
+﻿# Dependencies
+node_modules/
+
+# Compiled output
+dist/
+
+# Environment variables (never commit real secrets)
+.env
+
+# Prisma generated client (regenerated on install)
+node_modules/.prisma/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test coverage
+coverage/
+
+# OS
+.DS_Store
+Thumbs.db
