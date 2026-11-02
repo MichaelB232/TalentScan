@@ -2,7 +2,11 @@
 // Run: npx prisma migrate dev --name init
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // Explicitly include the musl + OpenSSL 3 binary for Alpine Linux (Docker)
+  // and the debian OpenSSL 3 binary for standard Linux.
+  // Both are bundled so the image works regardless of base OS.
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "linux-musl"]
 }
 
 datasource db {

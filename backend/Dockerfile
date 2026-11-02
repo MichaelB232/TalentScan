@@ -4,13 +4,16 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 
+# openssl is required by Prisma query engine on Alpine
+RUN apk add --no-cache openssl
+
 COPY package*.json ./
 COPY prisma ./prisma/
 
 # Install ALL deps (need devDeps for ts-node-dev / tsc)
 RUN npm ci
 
-# Generate Prisma client
+# Generate Prisma client (bundles the musl binary defined in schema.prisma)
 RUN npx prisma generate
 
 # ─────────────────────────────────────────────────────────
@@ -18,6 +21,8 @@ RUN npx prisma generate
 # ─────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
 WORKDIR /app
+
+RUN apk add --no-cache openssl
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/prisma ./prisma
@@ -33,6 +38,9 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+
+# openssl must be present at runtime for Prisma query engine
+RUN apk add --no-cache openssl
 
 # Only copy production node_modules + compiled output
 COPY package*.json ./

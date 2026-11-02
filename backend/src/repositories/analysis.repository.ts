@@ -19,7 +19,7 @@ export const analysisRepository = {
     return prisma.analysisResult.create({
       data: {
         ...data,
-        skillGaps: data.skillGaps as object[],
+        skillGaps: data.skillGaps as unknown as object[],
       },
       include: { candidate: true, jobDescription: true },
     });

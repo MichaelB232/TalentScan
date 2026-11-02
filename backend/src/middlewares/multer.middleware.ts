@@ -11,7 +11,8 @@ export const uploadMiddleware = multer({
     if (file.mimetype === "application/pdf") {
       cb(null, true);
     } else {
-      cb(new UnsupportedFileError() as unknown as null, false);
+      // multer v2: pass Error directly as first arg to reject the file
+      cb(new UnsupportedFileError());
     }
   },
 }).single("cv");
