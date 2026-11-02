@@ -5,6 +5,7 @@ import { analysisRepository } from "../repositories/analysis.repository";
 import { candidateRepository } from "../repositories/candidate.repository";
 import { jobDescriptionRepository } from "../repositories/jobDescription.repository";
 import { geminiModel } from "../config/gemini";
+import { parseGeminiJson } from "../utils/geminiParser";
 import { CVExtraction } from "../types/candidate.types";
 import { AIServiceError, NotFoundError } from "../errors/AppError";
 
@@ -62,14 +63,18 @@ export const analysisService = {
 
     try {
       const result = await geminiModel.generateContent(prompt);
-      const text = result.response.text().trim();
-      const clean = text.replace(/^```json\s*/i, "").replace(/```\s*$/i, "");
-      const parsed = JSON.parse(clean);
+      const raw = result.response.text();
+      const parsed = parseGeminiJson<{
+        matchScore: number;
+        executiveSummary: string;
+        skillGaps: string[];
+      }>(raw, "JD analysis");
       matchScore = parsed.matchScore;
       executiveSummary = parsed.executiveSummary;
       skillGaps = parsed.skillGaps;
     } catch (err) {
-      throw new AIServiceError("Failed to parse analysis response from Gemini.");
+      if (err instanceof AIServiceError) throw err;
+      throw new AIServiceError(`Gemini request failed: ${(err as Error).message}`);
     }
 
     // Persist result

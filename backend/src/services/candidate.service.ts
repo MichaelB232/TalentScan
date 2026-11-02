@@ -4,6 +4,7 @@
 import { candidateRepository } from "../repositories/candidate.repository";
 import { parsePdf } from "../utils/pdfParser";
 import { geminiModel } from "../config/gemini";
+import { parseGeminiJson } from "../utils/geminiParser";
 import { CVExtraction } from "../types/candidate.types";
 import { AIServiceError, NotFoundError, UnsupportedFileError } from "../errors/AppError";
 
@@ -93,12 +94,12 @@ export const candidateService = {
     let extraction: CVExtraction;
     try {
       const result = await geminiModel.generateContent(prompt);
-      const text = result.response.text().trim();
-      // Strip potential markdown code fences Gemini sometimes adds
-      const clean = text.replace(/^```json\s*/i, "").replace(/```\s*$/i, "");
-      extraction = JSON.parse(clean) as CVExtraction;
+      const raw = result.response.text();
+      extraction = parseGeminiJson<CVExtraction>(raw, "CV extraction");
     } catch (err) {
-      throw new AIServiceError("Failed to parse extraction response from Gemini.");
+      // Re-throw AIServiceError as-is; wrap anything else
+      if (err instanceof AIServiceError) throw err;
+      throw new AIServiceError(`Gemini request failed: ${(err as Error).message}`);
     }
 
     // 4. Save extraction result
