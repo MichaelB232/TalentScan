@@ -55,5 +55,8 @@ RUN npx prisma generate
 # Expose backend port
 EXPOSE 5000
 
-# Run migrations then start the server
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]
+# Push schema to DB (with retry) then start the server.
+# prisma db push is used here because no migration files exist yet.
+# When you're ready for production migrations, run `prisma migrate dev` locally
+# to generate the migrations/ folder, then switch back to `prisma migrate deploy`.
+CMD ["sh", "-c", "until npx prisma db push --accept-data-loss; do echo 'DB push failed, retrying in 3s...'; sleep 3; done && node dist/server.js"]

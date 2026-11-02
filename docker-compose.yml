@@ -1,8 +1,4 @@
 services:
-
-  # ──────────────────────────────────────────────
-  # PostgreSQL database
-  # ──────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     container_name: talentscan_db
@@ -15,15 +11,13 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 10s
     networks:
       - talentscan_net
 
-  # ──────────────────────────────────────────────
-  # Express backend
-  # ──────────────────────────────────────────────
   backend:
     build:
       context: ./backend
@@ -44,9 +38,6 @@ services:
     networks:
       - talentscan_net
 
-  # ──────────────────────────────────────────────
-  # React frontend (Nginx)
-  # ──────────────────────────────────────────────
   frontend:
     build:
       context: ./frontend
@@ -62,15 +53,9 @@ services:
     networks:
       - talentscan_net
 
-# ──────────────────────────────────────────────
-# Named volumes
-# ──────────────────────────────────────────────
 volumes:
   postgres_data:
 
-# ──────────────────────────────────────────────
-# Internal network (containers talk by service name)
-# ──────────────────────────────────────────────
 networks:
   talentscan_net:
     driver: bridge
